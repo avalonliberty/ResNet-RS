@@ -23,3 +23,16 @@ class ConvFixedPadding(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.conv(x)
+
+
+class BatchNormReLU(nn.Module):
+    def __init__(self, channels: int, relu: bool = True):
+        super(BatchNormReLU, self).__init__()
+        self.bn = nn.BatchNorm2d(channels)
+        self.relu = nn.ReLU() if relu else nn.Identity()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.bn(x)
+        output = self.relu(x)
+
+        return output
