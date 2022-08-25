@@ -36,3 +36,27 @@ class BatchNormReLU(nn.Module):
         output = self.relu(x)
 
         return output
+
+
+class StemBlock(nn.Module):
+    def __init__(self, channel_intermediate: int):
+        super(StemBlock, self).__init__()
+        channel_output = channel_intermediate * 2
+        self.process = nn.Sequential(
+            ConvFixedPadding(3, channel_intermediate, kernel_size=3, stride=2),
+            BatchNormReLU(channel_intermediate),
+            ConvFixedPadding(
+                channel_intermediate, channel_intermediate, kernel_size=3, stride=1
+            ),
+            BatchNormReLU(channel_intermediate),
+            ConvFixedPadding(
+                channel_intermediate, channel_output, kernel_size=3, stride=1
+            ),
+            BatchNormReLU(channel_output),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        output = self.process(x)
+
+        return output
