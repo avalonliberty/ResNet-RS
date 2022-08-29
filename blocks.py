@@ -155,3 +155,33 @@ class BottleNeckBlock(nn.Module):
         output = self.relu(shortcut + x)
 
         return output
+
+
+class Blocks(nn.Module):
+    def __init__(
+        self,
+        layer: int,
+        channel_input: int,
+        channel_intermediate: int,
+        stride: int,
+        se_ratio: float,
+    ):
+        super(Blocks, self).__init__()
+        process = [
+            BottleNeckBlock(channel_input, channel_intermediate, stride, se_ratio)
+        ]
+        for __ in range(layer - 1):
+            process.append(
+                BottleNeckBlock(
+                    channel_intermediate * BottleNeckBlock.expansion,
+                    channel_intermediate,
+                    stride=1,
+                    se_ratio=se_ratio,
+                )
+            )
+        self.process = nn.Sequential(*process)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        output = self.process(x)
+
+        return output
