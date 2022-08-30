@@ -185,3 +185,32 @@ class Blocks(nn.Module):
         output = self.process(x)
 
         return output
+
+
+class ResNetRS(nn.Module):
+    def __init__(self, config: dict):
+        super(ResNetRS, self).__init__()
+        layers = config["layers"]
+        se_ratio = config["se_ratio"] if config.get("se_ratio") else 0
+
+        self.stem = StemBlock(32)
+        self.layer1 = Blocks(layers[0], 64, 64, 1, se_ratio)
+        self.layer2 = Blocks(layers[1], 256, 128, 2, se_ratio)
+        self.layer3 = Blocks(layers[2], 512, 256, 2, se_ratio)
+        self.layer4 = Blocks(layers[3], 1024, 512, 2, se_ratio)
+        self.gap = nn.AdaptiveAvgPool2d((1, 1))
+        self.dropout = nn.Dropout(0.25)
+        self.predictor = nn.Linear(512 * 4, config["num_classes"])
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.stem(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+        x = self.gap(x)
+        x = torch.flatten(x, 1)
+        x = self.dropout(x)
+        output = self.predictor(x)
+
+        return output
